@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get("/getAllAppointments", async (req, res) => {
   const appointments = await Appointments.find()
-    .select(" patientId startTime endTime description isPaid amount")
+    .select(" patientId startTime endTime description isPaid currency amount")
     .populate("patientId", "-_id ownerName");
   res.send(appointments);
 });
@@ -15,7 +15,7 @@ router.get(
     const appointments = await Appointments.find({
       patientId: req.params.patientId,
     })
-      .select("patientId startTime endTime description isPaid amount")
+      .select("patientId startTime endTime description isPaid currency amount")
       .populate("patientId", " ownerName petType");
     res.send(appointments);
   }
@@ -37,7 +37,7 @@ router.post("/addNewAppointment", async (req, res) => {
     endTime: req.body.endTime,
     description: req.body.description,
     isPaid: req.body.isPaid,
-    // currency: req.body.currency,
+    currency: req.body.currency,
     amount: req.body.amount,
   });
   appointment = await appointment.save();
@@ -63,7 +63,7 @@ router.put("/updateAppointment/:appointmentId", async (req, res) => {
       endTime: req.body.endTime,
       description: req.body.description,
       isPaid: req.body.isPaid,
-      // currency: req.body.currency,
+      currency: req.body.currency,
       amount: req.body.amount,
     }
   );

@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import Joi from "joi";
 
-interface IPatients {
+type IPatients = {
   petName: String;
   petType: String;
   ownerName: String;
   ownerAddress: String;
   ownerPhoneNumber: Number;
-}
+};
 
 const patientSchema = new mongoose.Schema<IPatients>({
   petName: { type: String, required: true },
