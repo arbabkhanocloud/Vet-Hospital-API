@@ -1,12 +1,25 @@
 import mongoose from "mongoose";
 import Joi from "joi";
 
-const patientSchema = new mongoose.Schema({
-  petName: { type: String, require: true },
-  petType: { type: String, enum: ["cat", "dog", "bird"], require: true },
-  ownerName: { type: String, require: true },
-  ownerAddress: { type: String, require: true },
-  ownerPhoneNumber: { type: Number, require: true },
+interface IPatients {
+  petName: String;
+  petType: String;
+  ownerName: String;
+  ownerAddress: String;
+  ownerPhoneNumber: Number;
+}
+
+const patientSchema = new mongoose.Schema<IPatients>({
+  petName: { type: String, required: true },
+  petType: {
+    type: String,
+    enum: ["cat", "dog", "bird"],
+    message: "Pet type can be only Cat or Dog or Bird.",
+    required: true,
+  },
+  ownerName: { type: String, required: true },
+  ownerAddress: { type: String, required: true },
+  ownerPhoneNumber: { type: Number, required: true },
 });
 
 export const Patients = mongoose.model("Patient", patientSchema);

@@ -1,109 +1,97 @@
-import Joi from "joi";
+import { Appointments, validateAppointment } from "../models/Appointments";
 import express from "express";
 const router = express.Router();
 
-const appointments = [
-  {
-    id: 1,
-    startTime: "2018-03-29T13:34:00.000",
-    endTime: "2018-03-29T14:34:00.000",
-    description: "Arbab",
-    isPaid: "Lahore",
-    currency: "03070007428 ",
-    amount: "5000",
-  },
-  {
-    id: 2,
-    startTime: "2018-04-29T15:34:00.000",
-    endTime: "2018-04-29T1:34:00.000",
-    description: "uzair",
-    isPaid: "Lahore",
-    currency: "03070007428 ",
-    amount: "10000",
-  },
-  {
-    id: 3,
-    startTime: "2018-05-29T13:34:00.000",
-    endTime: "2018-05-29T13:34:00.000",
-    description: "uzair",
-    isPaid: "Lahore",
-    currency: "03070007428 ",
-    amount: "60000",
-  },
-];
-
-router.get("/getAllAppointments", (req, res) => {
+router.get("/getAllAppointments", async (req, res) => {
+  const appointments = await Appointments.find()
+    .select(" patientId startTime endTime description isPaid amount")
+    .populate("patientId", "-_id ownerName");
   res.send(appointments);
 });
 
-router.get("/getOneAppointment/:id", (req, res) => {
-  const appointment = appointments.find(
-    (g) => g.id === parseInt(req.params.id)
-  );
+router.get(
+  "/getAllAppointments-OfSinglePatient/:patientId",
+  async (req, res) => {
+    const appointments = await Appointments.find({
+      patientId: req.params.patientId,
+    })
+      .select("patientId startTime endTime description isPaid amount")
+      .populate("patientId", " ownerName petType");
+    res.send(appointments);
+  }
+);
+
+router.get("/getOneAppointment/:id", async (req, res) => {
+  const appointment = await Appointments.findById(req.params.id);
   if (!appointment)
     return res.status(404).send("Appointment with Given id is not found");
   res.send(appointment);
 });
 
-router.post("/addNewAppointment", (req, res) => {
+router.post("/addNewAppointment", async (req, res) => {
   const { error } = validateAppointment(req.body);
   if (error) return res.status(400).send(error.details[0].message);
-  const appointment = {
-    id: appointments.length + 1,
+  let appointment = new Appointments({
+    patientId: req.body.patientId,
     startTime: req.body.startTime,
     endTime: req.body.endTime,
     description: req.body.description,
     isPaid: req.body.isPaid,
-    currency: req.body.currency,
+    // currency: req.body.currency,
     amount: req.body.amount,
-  };
-  appointments.push(appointment);
+  });
+  appointment = await appointment.save();
   res.send(appointment);
 });
 
-router.put("/updateAppointment/:id", (req, res) => {
-  const appointment = appointments.find(
-    (a) => a.id === parseInt(req.params.id)
+router.put("/updateAppointment/:appointmentId", async (req, res) => {
+  console.log("coming appointment id;  ", req.params.appointmentId);
+  const isAppointmentexists = await Appointments.findById(
+    req.params.appointmentId
   );
-  if (!appointment)
-    return res.status(404).send("appointment with Given id is not found");
+  if (!isAppointmentexists)
+    return res.status(404).send("Appointment with given ID doest not exist!!!");
 
   const { error } = validateAppointment(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
-  appointment.startTime = req.body.startTime;
-  appointment.endTime = req.body.endTime;
-  appointment.description = req.body.description;
-  appointment.isPaid = req.body.isPaid;
-  appointment.currency = req.body.currency;
-  appointment.amount = req.body.amount;
-  res.send(appointment);
-});
-
-router.delete("/removeAppointment/:id", (req, res) => {
-  const appointment = appointments.find(
-    (a) => a.id === parseInt(req.params.id)
+  const appointment = await Appointments.findByIdAndUpdate(
+    req.params.appointmentId,
+    {
+      patientId: req.body.patientId,
+      startTime: req.body.startTime,
+      endTime: req.body.endTime,
+      description: req.body.description,
+      isPaid: req.body.isPaid,
+      // currency: req.body.currency,
+      amount: req.body.amount,
+    }
   );
   if (!appointment)
-    return res.status(404).send("appointment with Given id is not found");
-
-  const index = appointments.indexOf(appointment);
-  appointments.splice(index, 1);
+    return res.status(404).send("Appointment with given ID doest not exist!!!");
 
   res.send(appointment);
 });
 
-function validateAppointment(appointment: object) {
-  const appointmentschema = Joi.object().keys({
-    startTime: Joi.date().required(),
-    endTime: Joi.date().required(),
-    description: Joi.string().required(),
-    isPaid: Joi.boolean().required(),
-    currency: Joi.string(),
-    amount: Joi.number(),
-  });
-  Joi.valid;
-  return appointmentschema.validate(appointment);
-}
+router.delete("/removeAppointment/:appointmentId", async (req, res) => {
+  const appointment = await Appointments.findByIdAndRemove(
+    req.params.appointmentId
+  );
+
+  if (!appointment)
+    return res.status(404).send("Appointment with Given ID Does not exist");
+
+  res.send(appointment);
+});
+
+router.get("/unPaid", async (req, res) => {
+  const appointments = await Appointments.find({
+    isPaid: "false",
+  })
+    .populate("patientId", "-_id ownerName")
+    .select("patientId startTime endTime description")
+    .populate("patientId", " ownerName petType");
+  res.send(appointments);
+});
 
 export default router;
