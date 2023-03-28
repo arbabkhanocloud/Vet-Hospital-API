@@ -253,3 +253,30 @@ export const hospitalPopularPet = async (req: Request, res: Response) => {
   const popularPetDetail = await popularPet();
   res.send({ popularPetDetail, eachPetTotalMoney });
 };
+
+// export const weekk = async (req: Request, res: Response) => {
+//   const currentDate = new Date(req.params.date);
+//   const startOfWeekDate = startOfWeek(currentDate);
+//   const endOfWeekDate = endOfWeek(currentDate);
+//   const startOfMonthDate = startOfMonth(currentDate);
+//   const endOfMonthDate = endOfMonth(currentDate);
+//   const weeklyPaid = await Appointments.aggregate([
+//     {
+//       $match: {
+//         startTime: {
+//           $gte: startOfWeekDate,
+//         },
+//         endTime: { $lt: endOfWeekDate },
+//         isPaid: false,
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: "$currency",
+//         PaidAmount: { $sum: "$amount" },
+//       },
+//     },
+//   ]);
+//   console.log("new one:  ", weeklyPaid);
+//   res.send(weeklyPaid);
+// };

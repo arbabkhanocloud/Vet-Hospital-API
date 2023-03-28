@@ -10,6 +10,7 @@ import {
   patientRemainingBill,
   weeklyMonthlyReport,
   hospitalPopularPet,
+  // weekk,
 } from "../controllers/Appointments";
 import express from "express";
 const router = express.Router();
@@ -39,5 +40,7 @@ router.get(
 );
 router.get("/weekly-monthly-data/:date", asyncMiddleware(weeklyMonthlyReport));
 router.get("/popularPet", asyncMiddleware(hospitalPopularPet));
+
+// router.get("/a/:date", weekk);
 
 export default router;
