@@ -1,4 +1,5 @@
 import { popularPet } from "../controllers/Patients";
+import Converter from "../helper/CurrencyConverter";
 import { ObjectId } from "mongodb";
 import { Request, Response } from "express";
 import {
@@ -254,29 +255,30 @@ export const hospitalPopularPet = async (req: Request, res: Response) => {
   res.send({ popularPetDetail, eachPetTotalMoney });
 };
 
-// export const weekk = async (req: Request, res: Response) => {
-//   const currentDate = new Date(req.params.date);
-//   const startOfWeekDate = startOfWeek(currentDate);
-//   const endOfWeekDate = endOfWeek(currentDate);
-//   const startOfMonthDate = startOfMonth(currentDate);
-//   const endOfMonthDate = endOfMonth(currentDate);
-//   const weeklyPaid = await Appointments.aggregate([
-//     {
-//       $match: {
-//         startTime: {
-//           $gte: startOfWeekDate,
-//         },
-//         endTime: { $lt: endOfWeekDate },
-//         isPaid: false,
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: "$currency",
-//         PaidAmount: { $sum: "$amount" },
-//       },
-//     },
-//   ]);
-//   console.log("new one:  ", weeklyPaid);
-//   res.send(weeklyPaid);
-// };
+export const weekk = async (req: Request, res: Response) => {
+  const currentDate = new Date(req.params.date);
+  const startOfWeekDate = startOfWeek(currentDate);
+  const endOfWeekDate = endOfWeek(currentDate);
+  const startOfMonthDate = startOfMonth(currentDate);
+  const endOfMonthDate = endOfMonth(currentDate);
+  const weeklyPaid = await Appointments.aggregate([
+    {
+      $match: {
+        startTime: {
+          $gte: startOfWeekDate,
+        },
+        endTime: { $lt: endOfWeekDate },
+        isPaid: false,
+      },
+    },
+    {
+      $group: {
+        _id: "$currency",
+        PaidAmount: { $sum: "$amount" },
+      },
+    },
+  ]);
+  const amt = await Converter(150, "USD", "EUR");
+  console.log("amount:  ", amt);
+  res.send(weeklyPaid);
+};
