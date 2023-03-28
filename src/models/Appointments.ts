@@ -1,17 +1,8 @@
 import mongoose from "mongoose";
-import Joi from "joi";
+import { AppointmentDTO } from "../dto/Appointment.dto";
+import { CURRENCY } from "../constants/Constants";
 
-type IAppointments = {
-  patientId: mongoose.Schema.Types.ObjectId;
-  startTime: Date;
-  endTime: Date;
-  description: String;
-  isPaid: Boolean;
-  currency?: String;
-  amount?: Number;
-};
-
-const appointmentSchema = new mongoose.Schema<keyof IAppointments, any>({
+const appointmentSchema = new mongoose.Schema<keyof AppointmentDTO, any>({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
@@ -19,39 +10,13 @@ const appointmentSchema = new mongoose.Schema<keyof IAppointments, any>({
   isPaid: { type: Boolean, required: true },
   currency: {
     type: String,
-    enum: ["USD", "EUR", "Bitcoin"],
-    description: "Fee can only be in either USD or EUR or Bitcoin",
-    required: function () {
-      return this.isPaid;
-    },
+    enum: Object.values(CURRENCY),
+    required: true,
   },
   amount: {
     type: Number,
-    required: function () {
-      return this.isPaid;
-    },
+    required: true,
   },
 });
 
 export const Appointments = mongoose.model("Appointment", appointmentSchema);
-
-export function validateAppointment(appointment: object) {
-  const appointmentSchema = Joi.object().keys({
-    patientId: Joi.string().min(24).max(24).required(),
-    startTime: Joi.date().required(),
-    endTime: Joi.date().required(),
-    description: Joi.string().min(10).required(),
-    isPaid: Joi.boolean().required(),
-    currency: Joi.string().when("isPaid", {
-      is: true,
-      then: Joi.string().required(),
-      otherwise: Joi.forbidden(),
-    }),
-    amount: Joi.number().when("isPaid", {
-      is: true,
-      then: Joi.number().required(),
-      otherwise: Joi.forbidden(),
-    }),
-  });
-  return appointmentSchema.validate(appointment);
-}

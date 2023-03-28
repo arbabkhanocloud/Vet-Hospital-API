@@ -1,20 +1,12 @@
 import mongoose from "mongoose";
-import Joi from "joi";
+import { PatientDTO } from "../dto/Patient.dto";
+import { PETTYPE } from "../constants/Constants";
 
-type IPatients = {
-  petName: String;
-  petType: String;
-  ownerName: String;
-  ownerAddress: String;
-  ownerPhoneNumber: Number;
-};
-
-const patientSchema = new mongoose.Schema<IPatients>({
+const patientSchema = new mongoose.Schema<PatientDTO>({
   petName: { type: String, required: true },
   petType: {
     type: String,
-    enum: ["cat", "dog", "bird"],
-    message: "Pet type can be only Cat or Dog or Bird.",
+    enum: Object.values(PETTYPE),
     required: true,
   },
   ownerName: { type: String, required: true },
@@ -23,15 +15,3 @@ const patientSchema = new mongoose.Schema<IPatients>({
 });
 
 export const Patients = mongoose.model("Patient", patientSchema);
-
-export function validatePatient(patient: object) {
-  const patientSchema = Joi.object().keys({
-    petName: Joi.string().min(3).required(),
-    petType: Joi.string().max(6).required(),
-    ownerName: Joi.string().required(),
-    ownerAddress: Joi.string().required(),
-    ownerPhoneNumber: Joi.number(),
-  });
-  Joi.valid;
-  return patientSchema.validate(patient);
-}
