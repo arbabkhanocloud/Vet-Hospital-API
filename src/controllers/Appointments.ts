@@ -1,5 +1,5 @@
 import { popularPet } from "../controllers/Patients";
-import Converter from "../helper/CurrencyConverter";
+import { currencyConverter } from "../utils/CurrencyConverter";
 import { ObjectId } from "mongodb";
 import { Request, Response } from "express";
 import {
@@ -134,13 +134,17 @@ export const patientRemainingBill = async (req: Request, res: Response) => {
   res.send(patientRemainingBill);
 };
 
-export const weeklyMonthlyReport = async (req: Request, res: Response) => {
+export const weeklyAndMonthlyReport = async (req: Request, res: Response) => {
   const currentDate = new Date(req.params.date);
   const startOfWeekDate = startOfWeek(currentDate);
   const endOfWeekDate = endOfWeek(currentDate);
   const startOfMonthDate = startOfMonth(currentDate);
   const endOfMonthDate = endOfMonth(currentDate);
-  const weeklyPaid = await Appointments.aggregate([
+  let weeklyPaidAmount = 0;
+  let weeklyUnPaidAmount = 0;
+  let monthlyPaidAmount = 0;
+  let monthlyUnPaidAmount = 0;
+  const weeklyPaidEachCurrencyAmount = await Appointments.aggregate([
     {
       $match: {
         startTime: {
@@ -152,13 +156,20 @@ export const weeklyMonthlyReport = async (req: Request, res: Response) => {
     },
     {
       $group: {
-        _id: null,
+        _id: "$currency",
         PaidAmount: { $sum: "$amount" },
       },
     },
   ]);
-  const weeklyPaidAmount = weeklyPaid[0].PaidAmount;
-  const weeklyUnPaid = await Appointments.aggregate([
+  weeklyPaidEachCurrencyAmount.forEach((weeklyEachCurrencyAmount) => {
+    weeklyPaidAmount =
+      weeklyPaidAmount +
+      currencyConverter(
+        weeklyEachCurrencyAmount.PaidAmount,
+        weeklyEachCurrencyAmount._id
+      );
+  });
+  const weeklyUnPaidEachCurrencyAmount = await Appointments.aggregate([
     {
       $match: {
         startTime: {
@@ -170,13 +181,20 @@ export const weeklyMonthlyReport = async (req: Request, res: Response) => {
     },
     {
       $group: {
-        _id: null,
+        _id: "$currency",
         unPaidAmount: { $sum: "$amount" },
       },
     },
   ]);
-  const weeklyUnPaidAmount = weeklyUnPaid[0].unPaidAmount;
-  const monthlyPaid = await Appointments.aggregate([
+  weeklyUnPaidEachCurrencyAmount.forEach((weeklyEachCurrencyAmount) => {
+    weeklyUnPaidAmount =
+      weeklyUnPaidAmount +
+      currencyConverter(
+        weeklyEachCurrencyAmount.unPaidAmount,
+        weeklyEachCurrencyAmount._id
+      );
+  });
+  const monthlyPaidEachCurrencyAmount = await Appointments.aggregate([
     {
       $match: {
         startTime: {
@@ -188,13 +206,20 @@ export const weeklyMonthlyReport = async (req: Request, res: Response) => {
     },
     {
       $group: {
-        _id: null,
+        _id: "$currency",
         PaidAmount: { $sum: "$amount" },
       },
     },
   ]);
-  const monthlyPaidAmount = monthlyPaid[0].PaidAmount;
-  const monthlyUnPaid = await Appointments.aggregate([
+  monthlyPaidEachCurrencyAmount.forEach((monthlyEachCurrencyAmount) => {
+    monthlyPaidAmount =
+      monthlyPaidAmount +
+      currencyConverter(
+        monthlyEachCurrencyAmount.PaidAmount,
+        monthlyEachCurrencyAmount._id
+      );
+  });
+  const monthlyUnPaidEachCurrencyAmount = await Appointments.aggregate([
     {
       $match: {
         startTime: {
@@ -206,21 +231,28 @@ export const weeklyMonthlyReport = async (req: Request, res: Response) => {
     },
     {
       $group: {
-        _id: null,
+        _id: "$currency",
         unPaidAmount: { $sum: "$amount" },
       },
     },
   ]);
-  const monthlyUnPaidAmount = monthlyUnPaid[0].unPaidAmount;
+  monthlyUnPaidEachCurrencyAmount.forEach((monthlyEachCurrencyAmount) => {
+    monthlyUnPaidAmount =
+      monthlyUnPaidAmount +
+      currencyConverter(
+        monthlyEachCurrencyAmount.unPaidAmount,
+        monthlyEachCurrencyAmount._id
+      );
+  });
   const weeklyBalance = weeklyPaidAmount + weeklyUnPaidAmount;
   const monthlyBalance = monthlyPaidAmount + monthlyUnPaidAmount;
   res.send({
-    weeklyPaidAmount: weeklyPaidAmount,
-    weeklyUnPaidAmount: weeklyUnPaidAmount,
-    weeklyBalance: weeklyBalance,
-    monthlyPaidAmount: monthlyPaidAmount,
-    monthlyUnPaidAmount: monthlyUnPaidAmount,
-    monthlyBalance: monthlyBalance,
+    weeklyPaidAmountUSD: weeklyPaidAmount,
+    weeklyUnPaidAmountUSD: weeklyUnPaidAmount,
+    weeklyBalanceUSD: weeklyBalance,
+    monthlyPaidAmountUSD: monthlyPaidAmount,
+    monthlyUnPaidAmountUSD: monthlyUnPaidAmount,
+    monthlyBalanceUSD: monthlyBalance,
   });
 };
 
@@ -253,32 +285,4 @@ export const hospitalPopularPet = async (req: Request, res: Response) => {
   }
   const popularPetDetail = await popularPet();
   res.send({ popularPetDetail, eachPetTotalMoney });
-};
-
-export const weekk = async (req: Request, res: Response) => {
-  const currentDate = new Date(req.params.date);
-  const startOfWeekDate = startOfWeek(currentDate);
-  const endOfWeekDate = endOfWeek(currentDate);
-  const startOfMonthDate = startOfMonth(currentDate);
-  const endOfMonthDate = endOfMonth(currentDate);
-  const weeklyPaid = await Appointments.aggregate([
-    {
-      $match: {
-        startTime: {
-          $gte: startOfWeekDate,
-        },
-        endTime: { $lt: endOfWeekDate },
-        isPaid: false,
-      },
-    },
-    {
-      $group: {
-        _id: "$currency",
-        PaidAmount: { $sum: "$amount" },
-      },
-    },
-  ]);
-  const amt = await Converter(150, "USD", "EUR");
-  console.log("amount:  ", amt);
-  res.send(weeklyPaid);
 };

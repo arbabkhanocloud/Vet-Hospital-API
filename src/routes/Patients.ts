@@ -14,4 +14,5 @@ router.get("/getOnePatient/:id", asyncMiddleware(getOnePatient));
 router.post("/addNewPatient", asyncMiddleware(addNewPatient));
 router.put("/updatePatient/:id", asyncMiddleware(updatePatient));
 router.delete("/removePatient/:id", asyncMiddleware(removePatient));
+
 export default router;
